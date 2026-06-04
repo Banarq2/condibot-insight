@@ -1,11 +1,28 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  LayoutDashboard, FolderKanban, FileText, ListChecks, Leaf,
-  Camera, Bell, FileBarChart, Network, Settings, Sprout,
+  LayoutDashboard,
+  FolderKanban,
+  FileText,
+  ListChecks,
+  Leaf,
+  Camera,
+  Bell,
+  FileBarChart,
+  Network,
+  Settings,
+  Sprout,
 } from "lucide-react";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -26,7 +43,8 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
-  const isActive = (path: string) => path === "/" ? currentPath === "/" : currentPath.startsWith(path);
+  const isActive = (path: string) =>
+    path === "/" ? currentPath === "/" : currentPath.startsWith(path);
 
   return (
     <Sidebar collapsible="icon">
@@ -37,8 +55,12 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col leading-tight">
-              <span className="text-sm font-semibold text-sidebar-foreground">VMO Sustentabilidad</span>
-              <span className="text-[11px] text-sidebar-foreground/70">Validador de Condicionantes</span>
+              <span className="text-sm font-semibold text-sidebar-foreground">
+                VMO Sustentabilidad
+              </span>
+              <span className="text-[11px] text-sidebar-foreground/70">
+                Validador de Condicionantes
+              </span>
             </div>
           )}
         </div>

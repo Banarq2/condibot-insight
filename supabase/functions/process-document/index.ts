@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // Edge function: process-document
 // Recibe { document_id } o { text, project_id, doc_name }.
 // Descarga el PDF, lo envía a Lovable AI (Gemini 2.5 Pro), extrae condicionantes
@@ -98,17 +99,23 @@ Deno.serve(async (req: Request) => {
     const { document_id, project_id: bodyProjectId, text: rawText } = body;
 
     let projectId: string | null = bodyProjectId ?? null;
-    let docId: string | null = document_id ?? null;
+    const docId: string | null = document_id ?? null;
     let userContent: any;
 
     if (document_id) {
-      const { data: doc, error } = await admin.from("documents").select("*").eq("id", document_id).single();
+      const { data: doc, error } = await admin
+        .from("documents")
+        .select("*")
+        .eq("id", document_id)
+        .single();
       if (error || !doc) throw new Error("Documento no encontrado");
       projectId = doc.project_id;
 
       await admin.from("documents").update({ status: "procesando" }).eq("id", document_id);
 
-      const { data: file, error: dlErr } = await admin.storage.from("documents").download(doc.storage_path);
+      const { data: file, error: dlErr } = await admin.storage
+        .from("documents")
+        .download(doc.storage_path);
       if (dlErr || !file) throw new Error("No se pudo descargar el PDF: " + dlErr?.message);
 
       const buf = new Uint8Array(await file.arrayBuffer());
@@ -121,7 +128,10 @@ Deno.serve(async (req: Request) => {
       const b64 = btoa(binary);
 
       userContent = [
-        { type: "text", text: `Procesa este documento (${doc.doc_type}) y extrae toda la información estructurada en JSON según el formato indicado.` },
+        {
+          type: "text",
+          text: `Procesa este documento (${doc.doc_type}) y extrae toda la información estructurada en JSON según el formato indicado.`,
+        },
         { type: "image_url", image_url: { url: `data:application/pdf;base64,${b64}` } },
       ];
     } else if (rawText) {
@@ -147,50 +157,69 @@ Deno.serve(async (req: Request) => {
     if (!aiResp.ok) {
       const errTxt = await aiResp.text();
       if (docId) await admin.from("documents").update({ status: "error" }).eq("id", docId);
-      if (aiResp.status === 429) return new Response(JSON.stringify({ error: "Límite de uso de IA alcanzado, intenta más tarde." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-      if (aiResp.status === 402) return new Response(JSON.stringify({ error: "Saldo de IA agotado. Agrega créditos al workspace." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (aiResp.status === 429)
+        return new Response(
+          JSON.stringify({ error: "Límite de uso de IA alcanzado, intenta más tarde." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      if (aiResp.status === 402)
+        return new Response(
+          JSON.stringify({ error: "Saldo de IA agotado. Agrega créditos al workspace." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
       throw new Error("Error IA: " + errTxt);
     }
 
     const aiData = await aiResp.json();
     const content = aiData.choices?.[0]?.message?.content ?? "{}";
     let parsed: any;
-    try { parsed = JSON.parse(content); } catch { parsed = JSON.parse(content.replace(/```json|```/g, "").trim()); }
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      parsed = JSON.parse(content.replace(/```json|```/g, "").trim());
+    }
 
     // Crear proyecto si no existe
     if (!projectId && parsed.project) {
-      const { data: newProj, error: pErr } = await admin.from("projects").insert({
-        name: parsed.project.name || "Proyecto sin nombre",
-        expediente: parsed.project.expediente,
-        promovente: parsed.project.promovente,
-        authority: parsed.project.authority,
-        resolution_date: parsed.project.resolution_date,
-        location: parsed.project.location,
-        municipality: parsed.project.municipality,
-        state: parsed.project.state,
-        coordinates: parsed.project.coordinates,
-        activity: parsed.project.activity,
-        vigencia: parsed.project.vigencia,
-        surface: parsed.project.surface,
-        volume: parsed.project.volume,
-      }).select("id").single();
+      const { data: newProj, error: pErr } = await admin
+        .from("projects")
+        .insert({
+          name: parsed.project.name || "Proyecto sin nombre",
+          expediente: parsed.project.expediente,
+          promovente: parsed.project.promovente,
+          authority: parsed.project.authority,
+          resolution_date: parsed.project.resolution_date,
+          location: parsed.project.location,
+          municipality: parsed.project.municipality,
+          state: parsed.project.state,
+          coordinates: parsed.project.coordinates,
+          activity: parsed.project.activity,
+          vigencia: parsed.project.vigencia,
+          surface: parsed.project.surface,
+          volume: parsed.project.volume,
+        })
+        .select("id")
+        .single();
       if (pErr) throw pErr;
       projectId = newProj.id;
       if (docId) await admin.from("documents").update({ project_id: projectId }).eq("id", docId);
     } else if (projectId && parsed.project) {
       // actualizar campos vacíos
-      await admin.from("projects").update({
-        expediente: parsed.project.expediente,
-        promovente: parsed.project.promovente,
-        authority: parsed.project.authority,
-        resolution_date: parsed.project.resolution_date,
-        location: parsed.project.location,
-        municipality: parsed.project.municipality,
-        state: parsed.project.state,
-        activity: parsed.project.activity,
-        vigencia: parsed.project.vigencia,
-        surface: parsed.project.surface,
-      }).eq("id", projectId);
+      await admin
+        .from("projects")
+        .update({
+          expediente: parsed.project.expediente,
+          promovente: parsed.project.promovente,
+          authority: parsed.project.authority,
+          resolution_date: parsed.project.resolution_date,
+          location: parsed.project.location,
+          municipality: parsed.project.municipality,
+          state: parsed.project.state,
+          activity: parsed.project.activity,
+          vigencia: parsed.project.vigencia,
+          surface: parsed.project.surface,
+        })
+        .eq("id", projectId);
     }
 
     // Insertar condicionantes
@@ -214,7 +243,10 @@ Deno.serve(async (req: Request) => {
     }));
     let insertedConds: any[] = [];
     if (condRows.length) {
-      const { data, error } = await admin.from("conditionants").insert(condRows).select("id, category_code");
+      const { data, error } = await admin
+        .from("conditionants")
+        .insert(condRows)
+        .select("id, category_code");
       if (error) throw error;
       insertedConds = data ?? [];
     }
@@ -233,7 +265,10 @@ Deno.serve(async (req: Request) => {
     }));
     let insertedImpacts: any[] = [];
     if (impactRows.length) {
-      const { data, error } = await admin.from("impacts").insert(impactRows).select("id, impact_key");
+      const { data, error } = await admin
+        .from("impacts")
+        .insert(impactRows)
+        .select("id, impact_key");
       if (error) throw error;
       insertedImpacts = data ?? [];
     }
@@ -255,19 +290,29 @@ Deno.serve(async (req: Request) => {
     }
 
     if (docId) {
-      await admin.from("documents").update({
-        status: "procesado",
-        ai_summary: { executive_summary: parsed.executive_summary, project: parsed.project, counts: { conditionants: condRows.length, impacts: impactRows.length } },
-      }).eq("id", docId);
+      await admin
+        .from("documents")
+        .update({
+          status: "procesado",
+          ai_summary: {
+            executive_summary: parsed.executive_summary,
+            project: parsed.project,
+            counts: { conditionants: condRows.length, impacts: impactRows.length },
+          },
+        })
+        .eq("id", docId);
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      project_id: projectId,
-      conditionants_created: condRows.length,
-      impacts_created: impactRows.length,
-      executive_summary: parsed.executive_summary,
-    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        project_id: projectId,
+        conditionants_created: condRows.length,
+        impacts_created: impactRows.length,
+        executive_summary: parsed.executive_summary,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("process-document error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : String(e) }), {
