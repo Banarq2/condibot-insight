@@ -20,6 +20,7 @@ import { Route as CondicionantesRouteImport } from './routes/condicionantes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AlertasRouteImport } from './routes/alertas'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProyectosProjectIdRouteImport } from './routes/proyectos.$projectId'
 
 const ReportesRoute = ReportesRouteImport.update({
   id: '/reportes',
@@ -76,6 +77,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProyectosProjectIdRoute = ProyectosProjectIdRouteImport.update({
+  id: '/$projectId',
+  path: '/$projectId',
+  getParentRoute: () => ProyectosRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -87,8 +93,9 @@ export interface FileRoutesByFullPath {
   '/evidencias': typeof EvidenciasRoute
   '/impactos': typeof ImpactosRoute
   '/mapa': typeof MapaRoute
-  '/proyectos': typeof ProyectosRoute
+  '/proyectos': typeof ProyectosRouteWithChildren
   '/reportes': typeof ReportesRoute
+  '/proyectos/$projectId': typeof ProyectosProjectIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -100,8 +107,9 @@ export interface FileRoutesByTo {
   '/evidencias': typeof EvidenciasRoute
   '/impactos': typeof ImpactosRoute
   '/mapa': typeof MapaRoute
-  '/proyectos': typeof ProyectosRoute
+  '/proyectos': typeof ProyectosRouteWithChildren
   '/reportes': typeof ReportesRoute
+  '/proyectos/$projectId': typeof ProyectosProjectIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -114,8 +122,9 @@ export interface FileRoutesById {
   '/evidencias': typeof EvidenciasRoute
   '/impactos': typeof ImpactosRoute
   '/mapa': typeof MapaRoute
-  '/proyectos': typeof ProyectosRoute
+  '/proyectos': typeof ProyectosRouteWithChildren
   '/reportes': typeof ReportesRoute
+  '/proyectos/$projectId': typeof ProyectosProjectIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +140,7 @@ export interface FileRouteTypes {
     | '/mapa'
     | '/proyectos'
     | '/reportes'
+    | '/proyectos/$projectId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +154,7 @@ export interface FileRouteTypes {
     | '/mapa'
     | '/proyectos'
     | '/reportes'
+    | '/proyectos/$projectId'
   id:
     | '__root__'
     | '/'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/mapa'
     | '/proyectos'
     | '/reportes'
+    | '/proyectos/$projectId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -169,7 +181,7 @@ export interface RootRouteChildren {
   EvidenciasRoute: typeof EvidenciasRoute
   ImpactosRoute: typeof ImpactosRoute
   MapaRoute: typeof MapaRoute
-  ProyectosRoute: typeof ProyectosRoute
+  ProyectosRoute: typeof ProyectosRouteWithChildren
   ReportesRoute: typeof ReportesRoute
 }
 
@@ -252,8 +264,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/proyectos/$projectId': {
+      id: '/proyectos/$projectId'
+      path: '/$projectId'
+      fullPath: '/proyectos/$projectId'
+      preLoaderRoute: typeof ProyectosProjectIdRouteImport
+      parentRoute: typeof ProyectosRoute
+    }
   }
 }
+
+interface ProyectosRouteChildren {
+  ProyectosProjectIdRoute: typeof ProyectosProjectIdRoute
+}
+
+const ProyectosRouteChildren: ProyectosRouteChildren = {
+  ProyectosProjectIdRoute: ProyectosProjectIdRoute,
+}
+
+const ProyectosRouteWithChildren = ProyectosRoute._addFileChildren(
+  ProyectosRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -265,7 +296,7 @@ const rootRouteChildren: RootRouteChildren = {
   EvidenciasRoute: EvidenciasRoute,
   ImpactosRoute: ImpactosRoute,
   MapaRoute: MapaRoute,
-  ProyectosRoute: ProyectosRoute,
+  ProyectosRoute: ProyectosRouteWithChildren,
   ReportesRoute: ReportesRoute,
 }
 export const routeTree = rootRouteImport
