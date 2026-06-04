@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -321,6 +321,12 @@ function Projects() {
 
                   <span className="font-semibold text-primary">0%</span>
                 </div>
+
+                <Button className="w-full" variant="outline" asChild>
+                  <Link to="/proyectos/$projectId" params={{ projectId: project.id }}>
+                    Ver detalle
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}

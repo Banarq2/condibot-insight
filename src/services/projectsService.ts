@@ -49,6 +49,16 @@ export async function getProjects(): Promise<Project[]> {
   return data ?? [];
 }
 
+export async function getProjectById(projectId: string): Promise<Project> {
+  const { data, error } = await supabase.from("projects").select("*").eq("id", projectId).single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+}
+
 export async function createProject(input: CreateProjectInput): Promise<Project> {
   const {
     data: { user },
