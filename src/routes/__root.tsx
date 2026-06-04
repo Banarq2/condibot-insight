@@ -78,10 +78,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "VMO Sustentabilidad — Validador de Condicionantes Ambientales" },
-      { name: "description", content: "Plataforma para cargar, analizar y dar seguimiento a condicionantes ambientales extraídas de MIA y resoluciones." },
+      {
+        name: "description",
+        content:
+          "Plataforma para cargar, analizar y dar seguimiento a condicionantes ambientales extraídas de MIA y resoluciones.",
+      },
       { name: "author", content: "VMO Sustentabilidad" },
       { property: "og:title", content: "VMO Sustentabilidad — Validador de Condicionantes" },
-      { property: "og:description", content: "Extracción y seguimiento automático de condicionantes ambientales." },
+      {
+        property: "og:description",
+        content: "Extracción y seguimiento automático de condicionantes ambientales.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
